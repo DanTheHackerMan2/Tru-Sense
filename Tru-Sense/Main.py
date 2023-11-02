@@ -41,5 +41,4 @@ while True:
     print("Temp bitValue = {} ; Voltage = {} V ; Temp = {} C".format(\
         tempData, tempVoltage, temperature))
     sleep(sleepTime)
-
 #>
