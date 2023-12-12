@@ -1,4 +1,4 @@
-Utilizes Pyrebase
+Utilizes Pyrebase and Spidev
 
 Coded for use in Python on the Rasberry Pi
 
