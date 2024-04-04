@@ -36,45 +36,21 @@ user = auth.sign_in_with_email_and_password("dstahovich@outlook.com", "Jordan53"
 user = auth.refresh(user['refreshToken'])
 
 pers_data = {
-        "FirstName": {
-            "name": "Mortimer"
-        },
-        "MiddleName": {
-            "name": "'Morty'"
-        },
-        "LastName": {
-            "name": "Smith"
-        },
-        "Gender": {
-            "name": "Male"
-        },
-        "PhoneNumber": {
-            "name": "(302)831-2792"
-        },
-        "AlternatePhoneNumber": {
-            "name": ""
-        }
+        "FirstName": "Mortimer",
+        "MiddleName": "Morty",
+        "LastName": "Smith",
+        "Gender":  "Male",
+        "PhoneNumber": "(302)831-2792",
+        "AlternatePhoneNumber": ""
     }
 
 loc_data = {
-        "Street1": {
-           "name": "139 The Green"
-        },
-        "Street2": {
-           "name": ""
-        },
-        "City": {
-            "name":"Newark"
-        },
-        "State": {
-            "name": "DE"
-        },
-        "Zipcode": {
-            "name": "19716"
-        },
-        "Fire Alarm Location": {
-            "name": "Kitchen"
-        }
+        "Street1": "139 The Green",
+        "Street2": "",
+        "City": "Newark",
+        "State": "DE",
+        "Zipcode": "19716",
+        "Fire Alarm Location":"Kitchen"
     }
 
 db.child("Customers").child(user_uuid).child("Contact Information").set(pers_data,user['idToken']) 
@@ -94,12 +70,8 @@ while True:
         if(temp_r != 0):
             gas_con=True
         sens_Data = {
-            "Gas Sensor": {
-                "name": gas_con
-            },
-            "Temp Sensor": {
-                "name": temp_con
-            }
+            "Gas Sensor": gas_con,
+            "Temp Sensor": temp_con
         }   
         if(sensor_check==0):
             db.child("Customers").child(user_uuid).child("Sensors Active").set(sens_Data,user['idToken'])
@@ -117,9 +89,7 @@ while True:
     print('ADC Voltage: ' + str(channel1.voltage) + 'V')
 
     data = {
-        "Gas": {
-            "name": (channel0.value-1601)
-        }
+        "Gas": (channel0.value-1601)
     }
     db.child("Customers").child(user_uuid).child("Readings").child(current_time).set(data,user['idToken'])
     sensor_check+=1
