@@ -50,13 +50,17 @@ loc_data = {
         "City": "Newark",
         "State": "DE",
         "Zipcode": "19716",
-        "Fire Alarm Location":"Kitchen"
     }
 
-db.child("Customers").child(user_uuid).child("Contact Information").set(pers_data,user['idToken']) 
+db.child("Customers").child(user_uuid).child("Contact_Information").set(pers_data,user['idToken']) 
 db.child("Customers").child(user_uuid).child("Location").set(loc_data,user['idToken']) 
 
-#Set Up 
+#Set Up
+
+device_loc = { 
+        "Device_Location": "Kitchen",
+    }
+
 gas_con = False
 gas_r = channel0.value 
 temp_con = False
@@ -74,8 +78,8 @@ while True:
             "Temp Sensor": temp_con
         }   
         if(sensor_check==0):
-            db.child("Customers").child(user_uuid).child("Sensors Active").set(sens_Data,user['idToken'])
-        db.child("Customers").child(user_uuid).child("Sensors Active").update(sens_Data,user['idToken'])
+            db.child("Customers").child(user_uuid).child("Devices").child(device_loc).child("Sensors Active").set(sens_Data,user['idToken'])
+        db.child("Customers").child(user_uuid).child("Devices").child(device_loc).child("Sensors Active").update(sens_Data,user['idToken'])
         sensor_check=1
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
@@ -91,6 +95,6 @@ while True:
     data = {
         "Gas": (channel0.value-1601)
     }
-    db.child("Customers").child(user_uuid).child("Readings").child(current_time).set(data,user['idToken'])
+    db.child("Customers").child(user_uuid).child("Devices").child(device_loc).child("Readings").child(current_time).set(data,user['idToken'])
     sensor_check+=1
     time.sleep(5.0)#Limited to 20k samples a day, 85 k a seconds in a day. avg to 5
