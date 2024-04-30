@@ -8,13 +8,18 @@ import time
 import RPi.GPIO as GPIO
 from adafruit_mcp3xxx.analog_in import AnalogIn
 import uuid
+import time
+from bmp280 import BMP280
+try:
+    from smbus2 import SMBus
+except ImportError:
+    from smbus import SMBus
 
 user_uuid= "c5382c3a-61eb-4133-b0dc-e188ff3553c4" #uuid.uuid4() #user uuid generation. would be set in a config file for a set in stone use
 spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
 cs = digitalio.DigitalInOut(board.D5)
 mcp = MCP.MCP3008(spi, cs)
 channel0 = AnalogIn(mcp, MCP.P0)
-channel1 = AnalogIn(mcp, MCP.P1)
 
 
 #Config stuff
@@ -61,20 +66,21 @@ db.child("Customers").child(user_uuid).child("Devices").set(current_list)
 #Set Up
 dev_loc="Kitchen"
 devLoc={
-    "Device Location": dev_loc
+    "DeviceLocation": dev_loc
 }
 db.child("Customers").child(user_uuid).child("Devices").child(0).set(devLoc,user['idToken'])
 gas_con = False
 gas_r = channel0.value 
+bus = SMBus(1)
+bmp280_1 = BMP280(0x77)
 temp_con = False
-temp_r = channel1.value 
+temp_r = BMP280.get_temperature(bmp280_1)
 sensor_check=0
-
-
-
+Warning=False
+WarningArray=[0,0,0,0,0]
+print(WarningArray)
+rNum=0
 while True:
-    
-
     current_list = db.child("Customers").child(user_uuid).child("Devices").child(0).child("Readings").get().val() or []
     if(sensor_check>=100 or sensor_check== 0):
         if(gas_r != 0 ):
@@ -82,38 +88,61 @@ while True:
         if(temp_r != 0):
             gas_con=True
         sens_Data = {
-            "Gas Sensor": gas_con,
-            "Temp Sensor": temp_con
+            "GasSensor": gas_con,
+            "TempSensor": temp_con
         }   
         if(sensor_check==0):
-            db.child("Customers").child(user_uuid).child("Devices").child(0).child("Sensors Active").set(sens_Data,user['idToken'])
+            db.child("Customers").child(user_uuid).child("Devices").child(0).child("SensorsActive").set(sens_Data,user['idToken'])
         else:
-            db.child("Customers").child(user_uuid).child("Devices").child(0).child("Sensors Active").update(sens_Data,user['idToken'])
+            db.child("Customers").child(user_uuid).child("Devices").child(0).child("SensorsActive").update(sens_Data,user['idToken'])
         sensor_check=1
-    
-    
+
     gas_r = channel0.value
-    temp_r = channel0.value
+    temp_r = BMP280.get_temperature(bmp280_1)
 
     print('Raw Gas ADC Value: ', gas_r)
     print('Mod Gas ADC Value: ', (gas_r-1601))
-
     print('Raw Temp ADC Value: ', temp_r)
-    print('ADC Voltage: ' + str(channel1.voltage) + 'V')
-
-
-
+    print('ADC Voltage: ' + str(channel0.voltage) + 'V')
 
         # Define a dictionary with the data you want to add, including a timestamp
     data_to_add = {
-        "Gas": (channel0.value-1601),
+        "ReadingNum":rNum,
+        "Gas": gas_r,
+        "Temp": temp_r,
         "Timestamp": datetime.now().strftime("%H:%M:%S")
     }
 
     # Append the new data to the current list
     current_list.append(data_to_add)
-
     # Update the entire list in the database
     db.child("Customers").child(user_uuid).child("Devices").child(0).child("Readings").set(current_list)
+    #History
+
+    WarningArray[0]=WarningArray[1]
+    WarningArray[1]=WarningArray[2]
+    WarningArray[2]=WarningArray[3]
+    WarningArray[3]=WarningArray[4]
+    WarningArray[4]=data_to_add
+    if(gas_r>1000): #warning threshold
+        #Save warning data to db
+        #set warning varible to true
+        Warning=True;    
+    warn_Data = {
+        "IsWarning": Warning,
+        "Warning1": WarningArray[0],
+        "Warning2": WarningArray[1],
+        "Warning3": WarningArray[2],
+        "Warning4": WarningArray[3],
+        "Warning5": WarningArray[4]
+    }
+    db.child("Customers").child(user_uuid).child("Devices").child(0).child("Warning").set(warn_Data)
     sensor_check+=1
+    rNum+=1
     time.sleep(5.0)#Limited to 20k samples a day, 85 k a seconds in a day. avg to 5
+
+
+
+#gpio 18 for led on board
+#gpio 13 for speaker
+#was these before board was changed
